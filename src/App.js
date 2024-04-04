@@ -1,18 +1,34 @@
+import { flushSync } from "react-dom";
 import PRODUCTS from "./data";
+import { useState } from "react";
 
-function ProductTable( {products} ) {
+function ProductTable( {products, textSearch, stocked} ) {
+  const productFilter = []
+
+  products.forEach(product => {
+      if (product.name.toLowerCase().indexOf(textSearch.toLowerCase()) !== -1) {
+        if (stocked === false){
+          productFilter.push(product);
+        } else {
+          if (product.stocked){
+            productFilter.push(product);
+          };
+        };
+      };
+  });
 
   const rows = [];
   const categoryList = new Set();
 
-  products.forEach(product => {
+  //Create a set of category
+  productFilter.forEach(product => {
       if (!categoryList.has(product.category)) {
         categoryList.add(product.category);
       };
   });
 
   const arrObject = [];
-
+  //Create a list of category with product using object
   categoryList.forEach(x => {
     const categoryProduct = {
       category: x,
@@ -20,21 +36,23 @@ function ProductTable( {products} ) {
     };
     arrObject.push(categoryProduct);
   });
-
-  products.forEach(product => {
+  //Check from product and add to productlist
+  productFilter.forEach(product => {
     for (let i = 0; i < arrObject.length; ++i){
       if (product.category == arrObject[i].category) {
         arrObject[i].productList.push(product);
       };
     };
   });
-
+  //From productlist to component
   arrObject.forEach(o => {
     rows.push(<CategoryRow category={o.category} key={o.category} />);
     o.productList.forEach(p => {
       rows.push(< ProductRow product={p} key={p.name} />);
     });
   });
+
+
   return (
     <table>
       <thead>
@@ -70,13 +88,13 @@ function ProductRow({ product }) {
   </tr>);
 }
 
-function SearchBar() {
+function SearchBar( { textSearch, stocked , onSetTextSearch, onSetStocked} ) {
   return (
   <>
     <form>
-      <input type="text" placeholder="Search for product..." />
+      <input type="text" value = { textSearch } placeholder="Search for product..." onChange={ (e) => onSetTextSearch(e.target.value) } />
       <label>
-        <input type="checkbox"/> 
+        <input type="checkbox" checked = { stocked } onChange={ (e) => onSetStocked(e.target.checked) }/> 
           {' '}
           Only show products in stock
       </label>
@@ -85,10 +103,13 @@ function SearchBar() {
 }
 
 function TableFull( {products} ) {
+  const [textSearch, setTextSearch] = useState('');
+  const [stocked, setStocked] = useState(false);
+
   return (
   <div>
-    <SearchBar />
-    <ProductTable products={ products } />
+    <SearchBar textSearch = { textSearch } stocked = { stocked } onSetTextSearch = { setTextSearch } onSetStocked = { setStocked } />
+    <ProductTable products= { products } textSearch = { textSearch } stocked = { stocked } />
   </div>);
 }
 
